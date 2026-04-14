@@ -14,9 +14,7 @@ def start(page:ft.Page):
         elif page.route == "/dashboard":
             page.views.append(DashboardView(page, task_ctrl))
         if not page.views:
-            page:views.append(
-                ft.View("/",[ft.Text("Error:Ruta no encontrada o vista vacia")])
-                )
+            page:views.append(ft.View("/",[ft.Text("Error:Ruta no encontrada o vista vacia")]))
         page.update()   
     page.on_route_change=route_change
     page.go("/")
