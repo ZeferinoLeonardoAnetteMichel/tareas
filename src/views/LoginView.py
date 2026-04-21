@@ -1,15 +1,13 @@
 import flet as ft
 
-def LoginView(page: ft.Page, auth_controller=None):
-    usuario = "admin@gmail.com"
-    password = "1234"
-    
+def LoginView(page: ft.Page):
+    # --- Variables de control ---
     correo = ft.TextField(
         label="Correo electrónico",
         prefix_icon=ft.Icons.PERSON,
         width=400,
         border_radius=10,
-        border_color= "purple",
+        border_color="purple",
         keyboard_type=ft.KeyboardType.EMAIL
     )
 
@@ -22,11 +20,11 @@ def LoginView(page: ft.Page, auth_controller=None):
         border_radius=10,
         border_color="purple"
     )
-    
+
     mensaje = ft.Text("", color="red")
 
+    # --- Funciones auxiliares ---
     def mostrar_snackbar(mensaje_texto, color=ft.Colors.GREEN):
-        """Función auxiliar para mostrar notificaciones"""
         page.snack_bar = ft.SnackBar(
             content=ft.Text(mensaje_texto),
             bgcolor=color,
@@ -35,32 +33,57 @@ def LoginView(page: ft.Page, auth_controller=None):
         page.snack_bar.open = True
         page.update()
 
+    def pantalla_principal():
+        page.controls.clear()
+        titulo_panel = ft.Container(
+            content=ft.Text("Panel Principal", color="white", size=30, weight="bold"),
+            bgcolor="purple",
+            padding=20,
+            width=600
+        )
+        
+        menu = ft.Row(
+            [
+                ft.Column([ft.Icon(ft.Icons.HOME), ft.Text("Inicio")], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Column([ft.Icon(ft.Icons.SEARCH), ft.Text("Explorar")], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Column([ft.Icon(ft.Icons.PERSON), ft.Text("Perfil")], alignment=ft.MainAxisAlignment.CENTER),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+            width=300
+        )
+
+        page.add(
+            ft.Column(
+                [
+                    titulo_panel,
+                    ft.Container(height=60),
+                    ft.Text("Bienvenido al Sistema", size=40, weight="bold"),
+                    ft.Text("Has iniciado sesión correctamente", size=20, color="grey"),
+                    ft.Container(height=80),
+                    menu
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            )
+        )
+        page.update()
+
     def login_click(e):
+        # Lógica de validación
         if not correo.value or not contraseña.value:
             mensaje.value = "Por favor, llene todos los campos"
             mensaje.color = "red"
             page.update()
             return
-        
-        if auth_controller:
-            user, msg = auth_controller.login(correo.value, contraseña.value)
-            if user:
-                page.session.set("user", user)
-                mostrar_snackbar("¡Sesión iniciada correctamente!", ft.Colors.GREEN)
-                page.go("/dashboard")
-            else:
-                mensaje.value = msg
-                mensaje.color = "red"
-                page.update()
+
+        # Simulación de autenticación (manteniendo tu lógica)
+        if correo.value == "admin@gmail.com" and contraseña.value == "1234":
+            page.session.set("user", {"email": correo.value, "name": "Administrador"})
+            mostrar_snackbar("¡Sesión iniciada correctamente!", ft.Colors.GREEN)
+            pantalla_principal()
         else:
-            if correo.value == usuario and contraseña.value == password:
-                page.session.set("user", {"email": correo.value, "name": "Administrador"})
-                mostrar_snackbar("¡Sesión iniciada correctamente!", ft.Colors.GREEN)
-                page.go("/dashboard")
-            else:
-                mensaje.value = "Correo o contraseña incorrectos"
-                mensaje.color = "red"
-                page.update()
+            mensaje.value = "Correo o contraseña incorrectos"
+            mensaje.color = "red"
+            page.update()
 
     def go_to_registro(e):
         page.go("/registro")
@@ -68,6 +91,7 @@ def LoginView(page: ft.Page, auth_controller=None):
     def go_to_forgot_password(e):
         page.go("/recuperar")
 
+    # --- Definición de botones ---
     iniciar_sesion = ft.ElevatedButton(
         "Iniciar sesión",
         width=250,
@@ -91,7 +115,7 @@ def LoginView(page: ft.Page, auth_controller=None):
             shape=ft.RoundedRectangleBorder(radius=12),
         ),
     )
-    
+
     contraseña.on_submit = login_click
 
     return ft.View(
@@ -106,7 +130,7 @@ def LoginView(page: ft.Page, auth_controller=None):
         controls=[
             ft.Column(
                 [
-                    ft.Text("Inicio De Sesion", size=30, weight="purple"),
+                    ft.Text("Inicio De Sesion", size=30, weight="bold", color="purple"),
                     ft.Container(height=10),
                     correo,
                     ft.Container(height=10),
@@ -114,14 +138,8 @@ def LoginView(page: ft.Page, auth_controller=None):
                     ft.Container(height=10),
                     mensaje,
                     ft.Container(height=10),
-                    ft.TextButton(
-                        "¿Olvidaste tu contraseña?",
-                        on_click=go_to_forgot_password
-                    ),
-                    ft.Row(
-                        [iniciar_sesion, registro],
-                        alignment=ft.MainAxisAlignment.CENTER
-                    )
+                    ft.TextButton("¿Olvidaste tu contraseña?", on_click=go_to_forgot_password),
+                    ft.Row([iniciar_sesion, registro], alignment=ft.MainAxisAlignment.CENTER)
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 tight=True,
@@ -129,3 +147,10 @@ def LoginView(page: ft.Page, auth_controller=None):
             )
         ]
     )
+
+def main(page: ft.Page):
+    page.title = "Inicio de Sesión"
+    page.views.append(LoginView(page))
+    page.update()
+
+ft.app(target=main)

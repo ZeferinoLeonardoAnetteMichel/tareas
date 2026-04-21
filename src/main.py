@@ -8,6 +8,9 @@ def start(page: ft.Page):
     page.title="Sistema SIGE"
     page.window_width= 450
     page.window_height= 700
+    page.window_width=450
+    page.window_height=700
+    
     auth_ctrl = AuthController()
     task_ctrl = TareaController()
 
@@ -19,12 +22,7 @@ def start(page: ft.Page):
             
         elif page.route == "/dashboard":
             page.views.append(dashboardView(page, task_ctrl))
-        
-        if not page.views:
-            page.views.append(
-                ft.View("/", [ft.Text("Error: Ruta no encontrada o vista vacía")])
-            )
-
+            
         page.update()
         
     def view_pop(e):
@@ -37,11 +35,20 @@ def start(page: ft.Page):
     page.on_view_pop=view_pop
     
 
+    if len(page.views)> 1:
+                page.views.pop()
+                top_view=page.views[-1]
+                page.go(top_view.route)
+
+    page.on_route_change = route_change
+    page.on_view_pop=view_pop
+    
     if page.route == "/":
         route_change(None)
     else:
         page.go("/")
     
+
 def main():
     ft.app(target=start)
 
