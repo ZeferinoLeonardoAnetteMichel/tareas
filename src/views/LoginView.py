@@ -1,131 +1,143 @@
 import flet as ft
 
-def LoginView(page: ft.Page, auth_controller=None):
-    usuario_valido = "admin@gmail.com"
-    password_valido = "1234"
-    
-    correo = ft.TextField(
-        label="Correo electrónico",
-        prefix_icon=ft.Icons.PERSON,
-        width=400,
-        border_radius=10,
-        border_color= "purple",
-        keyboard_type=ft.KeyboardType.EMAIL
-    )
+def main(page: ft.Page):
+    page.title = "Inicio de sesión"
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+
+    usuario_valido = "admin"
+    password_valido = "12345"
+
+    correo = ft.TextField(label="Correo electrónico", width=280, border_color="purple")
 
     contraseña = ft.TextField(
-        label="Contraseña",
-        prefix_icon=ft.Icons.KEY,
+        label="Introduzca su contraseña",
         password=True,
         can_reveal_password=True,
-        width=400,
-        border_radius=10,
+        width=280,
         border_color="purple"
     )
-    
-    mensaje = ft.Text("", color="red")
 
-    def mostrar_snackbar(mensaje_texto, color=ft.Colors.GREEN):
-        """Función auxiliar para mostrar notificaciones"""
-        page.snack_bar = ft.SnackBar(
-            content=ft.Text(mensaje_texto),
-            bgcolor=color,
-            duration=2000,
-        )
-        page.snack_bar.open = True
+    mensaje = ft.Text("")
+
+    contenido = ft.Container()
+
+    pagina_inicio = ft.Column(
+        [
+            ft.Text("Bienvenido al Sistema", size=28, weight=ft.FontWeight.BOLD),
+            ft.Text("Has iniciado sesión correctamente")
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    )
+
+    pagina_explorar = ft.Column(
+        [
+            ft.Icon(ft.Icons.EXPLORE, size=60),
+            ft.Text("Explorar contenido", size=25)
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    )
+
+    pagina_perfil = ft.Column(
+        [
+            ft.Icon(ft.Icons.PERSON, size=60),
+            ft.Text("Perfil del usuario", size=25),
+            ft.Text("admin@gmail.com")
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    )
+
+    def cambiar_pagina(e):
+        if e.control.selected_index == 0:
+            contenido.content = pagina_inicio
+        elif e.control.selected_index == 1:
+            contenido.content = pagina_explorar
+        elif e.control.selected_index == 2:
+            contenido.content = pagina_perfil
+
         page.update()
 
-    def login_click(e):
-        if not correo.value or not contraseña.value:
-            mensaje.value = "Por favor, llene todos los campos"
+    def login(e):
+
+        if correo.value == "" or contraseña.value == "":
+            mensaje.value = "Error: Debes llenar todos los campos"
             mensaje.color = "red"
             page.update()
             return
-        
-        if auth_controller:
-            user, msg = auth_controller.login(correo.value, contraseña.value)
-            if user:
-                page.session.set("user", user)
-                mostrar_snackbar("¡Sesión iniciada correctamente!", ft.Colors.GREEN)
-                page.go("/dashboard")
-            else:
-                mensaje.value = msg
-                mensaje.color = "red"
-                page.update()
-        else:
-            if correo.value == usuario_valido and contraseña.value == password_valido:
-                page.session.set("user", {"email": correo.value, "name": "Administrador"})
-                mostrar_snackbar("¡Sesión iniciada correctamente!", ft.Colors.GREEN)
-                page.go("/dashboard")
-            else:
-                mensaje.value = "Correo o contraseña incorrectos"
-                mensaje.color = "red"
-                page.update()
 
-    def go_to_registro(e):
-        page.go("/registro")
+        if correo.value == usuario_valido and contraseña.value == password_valido:
 
-    def go_to_forgot_password(e):
-        page.go("/recuperar")
+            page.clean()
 
-    iniciar_sesion = ft.ElevatedButton(
-        "Iniciar sesión",
-        width=250,
-        on_click=login_click,
-        style=ft.ButtonStyle(
-            bgcolor=ft.Colors.PURPLE_400,
-            color=ft.Colors.WHITE,
-            padding=20,
-            shape=ft.RoundedRectangleBorder(radius=12),
-        ),
-    )
+            contenido.content = pagina_inicio
 
-    registro = ft.ElevatedButton(
-        "Registrarme",
-        width=200,
-        on_click=go_to_registro,
-        style=ft.ButtonStyle(
-            bgcolor=ft.Colors.PURPLE_600,
-            color=ft.Colors.WHITE,
-            padding=20,
-            shape=ft.RoundedRectangleBorder(radius=12),
-        ),
-    )
-    
-    contraseña.on_submit = login_click
-
-    return ft.View(
-        route="/",
-        vertical_alignment=ft.MainAxisAlignment.CENTER,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        appbar=ft.AppBar(
-            title=ft.Text("SIGE - Login"),
-            bgcolor=ft.Colors.PURPLE_300,
-            color=ft.Colors.WHITE
-        ),
-        controls=[
-            ft.Column(
-                [
-                    ft.Text("Acceso al Sistema", size=50, weight="bold", color="purple"),
-                    ft.Container(height=10),
-                    correo,
-                    ft.Container(height=10),
-                    contraseña,
-                    ft.Container(height=10),
-                    mensaje,
-                    ft.Container(height=10),
-                    ft.TextButton(
-                        "¿Olvidaste tu contraseña?",
-                        on_click=go_to_forgot_password
-                    ),
-                    ft.Row(
-                        [iniciar_sesion, registro],
-                        alignment=ft.MainAxisAlignment.CENTER
-                    )
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                tight=True,
-                spacing=15
+            page.add(
+                ft.Column(
+                    [
+                        contenido
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.CENTER
+                )
             )
-        ]
+
+            page.navigation_bar = ft.NavigationBar(
+                destinations=[
+                    ft.NavigationBarDestination(
+                        icon=ft.Icons.HOME,
+                        label="Inicio"
+                    ),
+                    ft.NavigationBarDestination(
+                        icon=ft.Icons.EXPLORE,
+                        label="Explorar"
+                    ),
+                    ft.NavigationBarDestination(
+                        icon=ft.Icons.PERSON,
+                        label="Perfil"
+                    ),
+                ],
+                on_change=cambiar_pagina
+            )
+
+            page.update()
+
+        else:
+            mensaje.value = "Correo o contraseña incorrectos"
+            mensaje.color = "red"
+            page.update()
+
+    icono = ft.Icon(icon=ft.Icons.PERSON, size=60)
+
+    sesion = ft.Container(
+        width=350,
+        padding=30,
+        border_radius=10,
+        bgcolor="grey200",
+        content=ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=15,
+            controls=[
+                ft.Text("Iniciar sesión", size=40, weight="bold"),
+                correo,
+                contraseña,
+                ft.ElevatedButton(
+                    content=ft.Text("Iniciar sesión"),
+                    width=280,
+                    on_click=login
+                ),
+                mensaje,
+                ft.TextButton(
+                    content=ft.Text("¿Olvidaste tu contraseña?")
+                    
+                    
+                )
+            ]
+        )
     )
+
+    page.add(icono, sesion)
+
+ft.app(target=main)

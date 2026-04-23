@@ -13,3 +13,13 @@ class AuthController:
             return success, "Usuario creado correctamente"
         except ValidationError as e:
             return False, e.errors()[0]['msg']
+        
+    def login(self, correo, contraseña):
+        if correo == "admin@gmail.com" and contraseña == "1234":
+            user = {
+                "email": correo,
+                "name": "Administrador"
+            }
+            return user, "Login correcto"
+        else:
+            return None, "Correo o contraseña incorrectos"
