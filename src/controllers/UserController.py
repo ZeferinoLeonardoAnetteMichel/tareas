@@ -1,15 +1,37 @@
-from models.UserModel import UsuarioModel 
-from models.schemasModel import UsuarioSchema
-from pydantic import ValidationError
-
+from models.UserModel import UsuarioModel
 class AuthController:
     def __init__(self):
-        self.model = UsuarioModel()
-        
-    def registrar_usuario(self, nombre, email, password):
+        self.usuario_model = UsuarioModel()
+
+    def login(self, email, password):
         try:
-            nuevo_usuario=UsuarioSchema(nombre=nombre, email=email,password=password)
-            success=self.model.registrar(nuevo_usuario)
-            return success, "Usuario creado correctamente"
-        except ValidationError as e:
-            return False, e.errors()[0]['msg']
+            user_db = self.usuario_model.validar_login(email, password)
+
+            if not user_db:
+                return None, "Correo o contraseña incorrectos"
+
+            user = {
+                "id_usuario": user_db["id_usuario"],
+                "nombre": user_db["nombre"],
+                "apellido": user_db["apellido"],
+                "email": user_db["email"]
+            }
+
+            return user, "Login exitoso"
+
+        except Exception as e:
+            return None, f"Error en login: {str(e)}"
+    
+    def registrar(self, usuario_data):
+        try:
+            if self.usuario_model.email_existe(usuario_data.email):
+                return False, "El correo electrónico ya está registrado"
+            exito = self.usuario_model.registrar(usuario_data)
+            
+            if exito:
+                return True, "Usuario registrado exitosamente"
+            else:
+                return False, "Error al registrar usuario"
+                
+        except Exception as e:
+            return False, f"Error en registro: {str(e)}"

@@ -1,53 +1,147 @@
 import flet as ft
 
-def dashboardView(page, tarea_controller):
-    user = page.session.get("user")
+def DashboardView(page, tarea_controller):
+    user = getattr(page, "user_data", None)
+    
     lista_tareas = ft.Column(scroll=ft.ScrollMode.ALWAYS, expand=True)
-
-    def refresh():
-        lista_tareas.controls.clear()
-        for t in tarea_controller.obtener_lista(user['id_usuario']):
-            lista_tareas.controls.append(
-                ft.Card(
-                    content=ft.Container(
-                        content=ft.ListTile(
-                            title=ft.Text(t['titulo'], weight="bold"),
-                            subtitle=ft.Text(f"{t['descripcion']}\nPrioridad: {t['prioridad']}"),
-                            trailing=ft.Badge(content=ft.Text(t['estado']), bgcolor=ft.colors.ORANGE_300)
-                        ), padding=10
+    
+    def eliminar_tarea(id_tarea):
+        success, msg = tarea_controller.eliminar_tarea(id_tarea)
+        if success:
+            cargar_tareas()
+        else:
+            page.snack_bar = ft.SnackBar(ft.Text(msg), bgcolor="red")
+            page.snack_bar.open = True
+            page.update()
+    
+    def cargar_tareas():
+        if user and 'id_usuario' in user:
+            lista_tareas.controls.clear()
+            tareas = tarea_controller.obtener_lista(user['id_usuario'])
+            
+            for t in tareas:
+                lista_tareas.controls.append(
+                    ft.Card(
+                        content=ft.Container(
+                            content=ft.ListTile(
+                                title=ft.Text(t['titulo'], weight="bold"),
+                                subtitle=ft.Text(f"{t.get('descripcion', '')}\nPrioridad: {t.get('prioridad', 'media')}"),
+                                trailing=ft.Row(
+                                    [
+                                        ft.Container(
+                                            content=ft.Text(t.get('estado', 'pendiente')),
+                                            padding=5,
+                                            border_radius=5
+                                        ),
+                                        ft.IconButton(
+                                            icon=ft.Icons.DELETE,
+                                            icon_color="black",
+                                            on_click=lambda e, id_t=t['id_tarea']: eliminar_tarea(id_t)
+                                        )
+                                    ],
+                                    tight=True
+                                )
+                            ),
+                            padding=10
+                        )
                     )
                 )
+            page.update()
+    
+    txt_titulo = ft.TextField(label="Titulo", expand=True)
+    txt_descripcion = ft.TextField(label="Descripcion", expand=True)
+    
+    prioridad = ft.RadioGroup(
+        value="media",
+        content=ft.Row([
+            ft.Radio(value="alta", label="Alta"),
+            ft.Radio(value="media", label="Media"),
+            ft.Radio(value="baja", label="Baja"),
+        ])
+    )
+    
+    clasificacion = ft.RadioGroup(
+        value="personal",
+        content=ft.Row([
+            ft.Radio(value="personal", label="Personal"),
+            ft.Radio(value="trabajo", label="Trabajo"),
+            ft.Radio(value="estudio", label="Estudio"),
+        ])
+    )
+    
+    estado = ft.RadioGroup(
+        value="pendiente",
+        content=ft.Row([
+            ft.Radio(value="pendiente", label="Pendiente"),
+            ft.Radio(value="completada", label="Completada"),
+        ])
+    )
+    
+    def agregar_tarea(e):
+        if user and 'id_usuario' in user:
+            if not txt_titulo.value:
+                return
+            
+            success, msg = tarea_controller.guardar_nueva(
+                user['id_usuario'],
+                txt_titulo.value,
+                txt_descripcion.value,
+                prioridad.value,
+                clasificacion.value,
+                estado.value
             )
-        page.update()
-
-    txt_titulo = ft.TextField(label="Nueva Tarea", expand=True)
-
-    def add_task(e):
-        success, msg = tarea_controller.guardar_nueva(
-            user['id_usuario'], 
-            txt_titulo.value, 
-            "", 
-            "media", 
-            "trabajo"
+            
+            if success:
+                txt_titulo.value = ""
+                txt_descripcion.value = ""
+                cargar_tareas()
+                page.update()
+    
+    def mostrar_perfil(e):
+        if not user:
+            return
+        
+        dialogo = ft.AlertDialog(
+            title=ft.Text("Perfil"),
+            content=ft.Column([
+                ft.Text(f"ID: {user.get('id_usuario', '')}"),
+                ft.Text(f"Nombre: {user.get('nombre', '')}"),
+                ft.Text(f"Apellido: {user.get('apellido', '')}"),
+                ft.Text(f"Email: {user.get('email', '')}"),
+            ], tight=True)
         )
-        if success:
-            txt_titulo.value = ""
-            refresh()
-
-    return ft.View("/dashboard", [
-        ft.AppBar(
-            title=ft.Text(f"Bienvenido, {user['nombre']}"),
-            actions=[
-                ft.IconButton(ft.icons.EXIT_TO_APP, on_click=lambda _: page.go("/"))
-            ],
-        ),
-        ft.Column([
-            ft.Row([
-                txt_titulo,
-                ft.FloatingActionButton(icon=ft.icons.ADD, on_click=add_task),
-            ]),
-            ft.Divider(),
-            ft.Text("Mis Tareas Pendientes", size=20, weight="bold"),
-            lista_tareas
-        ], expand=True, padding=20),
-    ], on_open=lambda _: refresh())
+        page.overlay.append(dialogo)
+        dialogo.open = True
+        page.update()
+    
+    cargar_tareas()
+    
+    return ft.View(
+        route="/dashboard",
+        controls=[
+            ft.AppBar(
+                title=ft.Text(f"Bienvenid@, {user.get('nombre', 'Usuario') if user else 'Usuario'}"),
+                actions=[
+                    ft.IconButton(ft.Icons.PERSON, on_click=mostrar_perfil),
+                    ft.IconButton(ft.Icons.EXIT_TO_APP, on_click=lambda _: page.go("/"))
+                ],
+            ),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("Nueva Tarea:", size=30, weight="bold",color="purple"),
+                    ft.Row([txt_titulo, txt_descripcion]),
+                    ft.Row([
+                        ft.Column([ft.Text("Prioridad:"), prioridad], spacing=5),
+                        ft.Column([ft.Text("Clasificacion:"), clasificacion], spacing=5),
+                        ft.Column([ft.Text("Estado:"), estado], spacing=5),
+                    ], spacing=30, vertical_alignment=ft.CrossAxisAlignment.START),
+                    ft.ElevatedButton("Guardar", on_click=agregar_tarea),
+                    ft.Divider(),
+                    ft.Text("Mis Tareas:", size=23, weight="bold",color="purple"),
+                    lista_tareas
+                ], expand=True),
+                padding=20,
+                expand=True
+            ),
+        ]
+    )
