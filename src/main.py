@@ -43,4 +43,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #usuario,registro
+    #se registre el usuario,registro de cuando inicio o salio o registro 
+# que vaya al inicio de sesion o schemas 
