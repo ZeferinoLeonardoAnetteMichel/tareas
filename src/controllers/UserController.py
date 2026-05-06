@@ -35,3 +35,20 @@ class AuthController:
                 
         except Exception as e:
             return False, f"Error en registro: {str(e)}"
+        
+def login_exitoso(page, user_data): 
+    cuentas = page.client_storage.get("perfiles_activos") or []
+    
+    nuevo_perfil = {
+        "id": user_data['id_usuario'],
+        "nombre": user_data['nombre'],
+        "fecha": user_data.get('ultimo_acceso', 'Reciente')
+    }
+    
+    # Evitar duplicados
+    if not any(p['id'] == nuevo_perfil['id'] for p in cuentas):
+        cuentas.append(nuevo_perfil)
+        page.client_storage.set("perfiles_activos", cuentas)
+    
+    # Después de guardar, usualmente querrás navegar al dashboard
+    page.go("/dashboard")

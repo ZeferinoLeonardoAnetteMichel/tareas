@@ -21,7 +21,7 @@ class UsuarioModel:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "INSERT INTO usuario (nombre, apellido, email, password) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO usuario (nombre, apellido, email, password, fecha_registro) VALUES (%s, %s, %s, %s, NOW())",
                 (usuario_data.nombre, usuario_data.apellido, usuario_data.email, hashed_pw.decode('utf-8'))
             )
             conn.commit()
@@ -37,6 +37,9 @@ class UsuarioModel:
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM usuario WHERE email = %s", (email,))
         user = cursor.fetchone()
+        if user:
+            cursor.execute("UPDATE usuario SET ultimo_acceso = NOW() WHERE id_usuario = %s", (user['id_usuario'],))
+        conn.commit()
         conn.close()
         
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):

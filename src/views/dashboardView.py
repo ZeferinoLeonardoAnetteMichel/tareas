@@ -2,6 +2,11 @@ import flet as ft
 
 def DashboardView(page, tarea_controller):
     user = getattr(page, "user_data", None)
+    txt_ultimo_acceso = ft.Text(
+        value=f"Último ingreso: {user.get('ultimo_acceso', 'Primera vez') if user else ''}",
+        size=12,
+        italic=True,
+    )
     
     lista_tareas = ft.Column(scroll=ft.ScrollMode.ALWAYS, expand=True)
     
@@ -136,6 +141,7 @@ def DashboardView(page, tarea_controller):
                         ft.Column([ft.Text("Estado:"), estado], spacing=5),
                     ], spacing=30, vertical_alignment=ft.CrossAxisAlignment.START),
                     ft.ElevatedButton("Guardar", on_click=agregar_tarea),
+                    txt_ultimo_acceso,
                     ft.Divider(),
                     ft.Text("Mis Tareas:", size=23, weight="bold",color="purple"),
                     lista_tareas
